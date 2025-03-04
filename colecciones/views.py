@@ -50,5 +50,24 @@ class ProductoFotoViewSet(viewsets.ModelViewSet):
     permission_classes = (BasePermissions,)
     
     
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        data = request.data.copy()
+
+        if 'producto' not in data:
+            data['producto'] = instance.producto.id
+
+        if data.get('es_principal') == True:
+            ProductoFoto.objects.filter(producto=instance.producto).update(es_principal=False)
+        
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        return Response(serializer.data)
+    
+    
     
 

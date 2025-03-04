@@ -56,8 +56,15 @@ class ProductoFoto(models.Model):
         return f"Imagen de {self.producto.nombre}"
     
     def save(self, *args, **kwargs):
+        # Si es una nueva foto y no hay otras fotos para este producto, establecerla como principal
         if not self.pk and not ProductoFoto.objects.filter(producto=self.producto).exists():
             self.es_principal = True
+        
+        # Si estamos estableciendo esta foto como principal, asegurarse de que las demás no lo sean
+        if self.es_principal:
+            # Actualizar otras fotos solo si esta foto ya existe en la base de datos
+            if self.pk:
+                ProductoFoto.objects.filter(producto=self.producto).exclude(pk=self.pk).update(es_principal=False)
         
         super().save(*args, **kwargs)
 
