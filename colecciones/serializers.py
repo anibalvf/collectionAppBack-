@@ -20,6 +20,9 @@ class CategoriaSerializer(serializers.ModelSerializer):
 
 class ProductoSerializer(serializers.ModelSerializer):
     foto_principal = serializers.SerializerMethodField()
+    coleccion_nombre = serializers.CharField(source='coleccion.nombre', read_only=True)
+    tipo_nombre = serializers.CharField(source='tipo.nombre', read_only=True, allow_null=True)
+    categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True, allow_null=True)
     
     class Meta:
         model = Producto
@@ -33,6 +36,12 @@ class ProductoSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(foto_principal.imagen.url)
             return foto_principal.imagen.url
         return None
+        
+    def to_representation(self, instance):
+        # Asegurarse de que los objetos relacionados estén precargados
+        if not hasattr(instance, '_prefetched_objects_cache') or 'coleccion' not in getattr(instance, '_prefetched_objects_cache', {}):
+            instance = Producto.objects.select_related('coleccion', 'tipo', 'categoria').get(pk=instance.pk)
+        return super().to_representation(instance)
 
 class ProductoFotoSerializer(serializers.ModelSerializer):
     class Meta:
